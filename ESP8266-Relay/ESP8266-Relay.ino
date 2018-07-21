@@ -62,7 +62,9 @@ void loop()
     digitalWrite(Relay_1, RELAY_ON);
   }
 
-  Serial.println("Going into deep sleep for seconds");
+  Serial.print("Going into deep sleep for ");
+  Serial.print(sleepTime);
+  Serial.println(" seconds.");
   ESP.deepSleep(sleepTime);
 }
 
