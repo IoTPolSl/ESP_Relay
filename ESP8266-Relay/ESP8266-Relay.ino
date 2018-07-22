@@ -1,9 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266Ping.h>
-
 #include<Wire.h>
+//#include <EEPROM.h>
 
 #define FILLARRAY(a,n) a[0]=n, memcpy( ((char*)a)+sizeof(a[0]), a, sizeof(a)-sizeof(a[0]) );
+
+#define setupMode 1
 
 #define RELAY_ON  1
 #define RELAY_OFF 0
@@ -36,6 +38,12 @@ void setup()
 {
   FILLARRAY(ipDigit_3,0);
   FILLARRAY(ipDigit_4,0);
+//  EEPROM.begin(512);
+
+  if(digitalRead(setupMode) == HIGH) 
+  {
+    my_setup();
+  }
   
   Serial.begin(9600);
   Serial.setTimeout(2000);
@@ -128,4 +136,9 @@ bool my_ping(IPAddress ip)
   }
   
   if (ret != true) return false;
+}
+
+void my_setup()
+{
+  
 }
