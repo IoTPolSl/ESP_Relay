@@ -3,6 +3,8 @@
 
 #include<Wire.h>
 
+#define FILLARRAY(a,n) a[0]=n, memcpy( ((char*)a)+sizeof(a[0]), a, sizeof(a)-sizeof(a[0]) );
+
 #define RELAY_ON  1
 #define RELAY_OFF 0
 
@@ -20,6 +22,10 @@ WiFiServer server(80);
 
 int sleepTime = 60000000; // 5min
 
+int ipDigit_3[255];
+int ipDigit_4[255];
+
+
 IPAddress WAP = (192, 168, 0, 1);
 IPAddress RPi_1 = (192, 168, 0, 107);
 
@@ -28,6 +34,9 @@ IPAddress RPi_1 = (192, 168, 0, 107);
 //------------------------------------------------------------------------
 void setup() 
 {
+  FILLARRAY(ipDigit_3,0);
+  FILLARRAY(ipDigit_4,0);
+  
   Serial.begin(9600);
   Serial.setTimeout(2000);
   while(!Serial) { }
@@ -57,8 +66,6 @@ void setup()
 //------------------------------------------------------------------------
 void loop() 
 {
-  //my_setup();
-  
   if (my_ping(WAP) == false)
   {
     Serial.println("reseting WAP");
@@ -70,10 +77,30 @@ void loop()
   if (my_ping(RPi_1) == false)
   {
     Serial.println("reseting RPi_1");
-    digitalWrite(Relay_1, RELAY_OFF);
+    digitalWrite(Relay_2, RELAY_OFF);
     delay(5000);
-    digitalWrite(Relay_1, RELAY_ON);
+    digitalWrite(Relay_2, RELAY_ON);
   }
+
+//------------------------------------------------------------------------
+  for (int i = 0; i<255; i++)
+  {
+    for (int j = 0; j<255; j++)
+    {
+      if ( (ipDigit_3[i] != 0) || (ipDigit_4[j] != 0) )
+      {
+        IPAddress ip = (192, 168, ipDigit_3[i], ipDigit_4[j]);
+        if (my_ping(RPi_1) == false)
+        {
+          Serial.print("reseting device number "); Serial.print(ipDigit_3[i]); Serial.print(" "); Serial.println(ipDigit_4[j]);
+          digitalWrite(Relay_1, RELAY_OFF);
+          delay(5000);
+          digitalWrite(Relay_1, RELAY_ON);
+        }
+      }
+    }  
+  }
+ //------------------------------------------------------------------------
 
   Serial.print("Going into deep sleep for ");
   Serial.print(sleepTime);                       
@@ -102,30 +129,3 @@ bool my_ping(IPAddress ip)
   
   if (ret != true) return false;
 }
-
-void my_setup()
-{
-  Serial.begin(9600);
-  Serial.setTimeout(2000);
-  while(!Serial) { }
-  Serial.println();
-  Serial.println("I'm awake.");
-  
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  
-  Serial.println("");
-  Serial.println("WiFi connected");
-  
-  server.begin();
-  Serial.println("Server started");
-  Serial.println(WiFi.localIP());
-}
-
