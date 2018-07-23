@@ -42,7 +42,7 @@ void setup()
 
   if(digitalRead(setupMode) == HIGH) 
   {
-    my_setup();
+    configuration();
   }
   
   Serial.begin(9600);
@@ -138,7 +138,7 @@ bool my_ping(IPAddress ip)
   if (ret != true) return false;
 }
 
-void my_setup()
+void configuration()
 {
   
 }
