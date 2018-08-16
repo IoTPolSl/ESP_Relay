@@ -4,11 +4,8 @@
 #include <ESP8266WebServer.h>
 #include <Wire.h>
 #include <FS.h>
-//#include <EEPROM.h>
 
 #define FILLARRAY(a,n) a[0]=n, memcpy( ((char*)a)+sizeof(a[0]), a, sizeof(a)-sizeof(a[0]) );
-
-#define setupMode 1
 
 #define RELAY_ON  1
 #define RELAY_OFF 0
@@ -24,9 +21,7 @@ const char* ssid = "esp"; //your WiFi Name
 const char* password = "12345678";  //Your Wifi Password
 
 const char* ap_ssid = "conf_ESP";
-const char* ap_password = "WhereAreAv0cados";
-
-bool con_mod = true;
+const char* ap_password = "WhereAreTheAv0cados";
 
 ESP8266WebServer server(80);
 
@@ -40,17 +35,23 @@ const String HOMEPAGE           = "<form method=\"POST\" action=\"\"><table><tr>
 
 int sleepTime = 60000000; // 5min
 
+int ipDigit_1[255];
+int ipDigit_2[255];
 int ipDigit_3[255];
 int ipDigit_4[255];
 
 IPAddress WAP = (192, 168, 0, 1);
 IPAddress RPi_1 = (192, 168, 0, 107);
 
+File f_ip;
+File f_ssid;
+
 //------------------------------------------------------------------------
 //                          setup
 //------------------------------------------------------------------------
-void setup() 
-{
+void setup() {
+  FILLARRAY(ipDigit_1,0);
+  FILLARRAY(ipDigit_2,0);
   FILLARRAY(ipDigit_3,0);
   FILLARRAY(ipDigit_4,0);
     
@@ -63,25 +64,49 @@ void setup()
   SPIFFS.begin();
   Serial.println("FS started");
 
-  File f_ip = SPIFFS.open("/ipList.txt", "a+");
-  if (!f_ip) 
-  {
+  f_ip = SPIFFS.open("/ipList.txt", "r");
+  /* TODO
+   * Read from f_ip all ip's until EOF
+   * 
+   * while (!EOF) {
+   *  f_ip >> ipDigit_3[i];
+   *  f_ip >> ipDigit_4[i];
+   *  i++;
+   * } 
+   */
+  f_ip.close();
+  
+  f_ssid = SPIFFS.open("/ssid.txt", "r");
+  /* TODO
+   * Read from f_ssid 
+   * 
+   * f_ip >> ssid;
+   * f_ip >> password;
+   * i++;
+   * 
+   */
+  /*
+   * ssid >> f_ssid;
+   * " " >> f_ssid;
+   * password >> f_ssid;
+   * 
+   */
+  f_ssid.close();
+  
+  if (!f_ip) {
     Serial.println("file open failed");
   }
 
-  if (con_mod == true)
-  {
+  if (digitalRead(1) == HIGH) {
     configuration();
   }
 
-  if (con_mod == false)
-  { 
+  if (digitalRead(1) == LOW) { 
     Serial.print("Connecting to ");
     Serial.println(ssid);
     WiFi.begin(ssid, password);
   
-    while (WiFi.status() != WL_CONNECTED) 
-    {
+    while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
     }
@@ -98,20 +123,16 @@ void setup()
 //------------------------------------------------------------------------
 //                          loop
 //------------------------------------------------------------------------
-void loop() 
-{
-  if (con_mod == false)
-  {
-    if (my_ping(WAP) == false)
-    {
+void loop() {
+  if (digitalRead(1) == LOW) {
+    if (my_ping(WAP) == false) {
       Serial.println("reseting WAP");
       digitalWrite(Relay_1, RELAY_OFF);
       delay(5000);
       digitalWrite(Relay_1, RELAY_ON);
     }
 
-    if (my_ping(RPi_1) == false)
-    {
+    if (my_ping(RPi_1) == false) {
       Serial.println("reseting RPi_1");
       digitalWrite(Relay_2, RELAY_OFF);
       delay(5000);
@@ -119,15 +140,11 @@ void loop()
     }
 
   //------------------------------------------------------------------------
-    for (int i = 0; i<255; i++)
-    {
-      for (int j = 0; j<255; j++)
-      {
-        if ( (ipDigit_3[i] != 0) || (ipDigit_4[j] != 0) )
-        {
+    for (int i = 0; i<255; i++) {
+      for (int j = 0; j<255; j++) {
+        if ( (ipDigit_3[i] != 0) || (ipDigit_4[j] != 0) ) {
           IPAddress ip = (192, 168, ipDigit_3[i], ipDigit_4[j]);
-          if (my_ping(RPi_1) == false)
-          {
+          if (my_ping(RPi_1) == false) {
             Serial.print("reseting device number "); Serial.print(ipDigit_3[i]); Serial.print(" "); Serial.println(ipDigit_4[j]);
             digitalWrite(Relay_1, RELAY_OFF);
             delay(5000);
@@ -135,6 +152,7 @@ void loop()
           }
         }
       }
+    }
   //------------------------------------------------------------------------
 
       Serial.print("Going into deep sleep for ");
@@ -144,8 +162,7 @@ void loop()
     }
   }  
 
-  if (con_mod == true)
-  {
+  if (digitalRead(1) == HIGH) {
     server.handleClient();
   }
 }
@@ -154,18 +171,15 @@ void loop()
 //------------------------------------------------------------------------
 //                          voids
 //------------------------------------------------------------------------
-bool my_ping(IPAddress ip)
-{
+bool my_ping(IPAddress ip) {
   bool ret = false;
 
   Serial.print("Ping to: ");
   Serial.println(ip);
   
-  for (int i = 0; i <= 4; i++)
-  {
+  for (int i = 0; i <= 4; i++) {
     ret = Ping.ping(ip);
-    if (ret == true) 
-    {
+    if (ret == true) {
       Serial.println("OK");
       return true;
     }
@@ -176,8 +190,7 @@ bool my_ping(IPAddress ip)
   if (ret != true) return false;
 }
 
-void configuration()
-{
+void configuration() {
   Serial.println("Configmode");
 
   Serial.println("Configuring access point...");
@@ -193,8 +206,11 @@ void configuration()
   Serial.println("HTTP server started");
 }
 
-void handleRoot() 
-{
+void readFromFile() {
+  
+}
+
+void handleRoot() {
   String s =HTTP_HEAD;
       s += HTTP_STYLE;
       s += HTTP_SCRIPT;  
