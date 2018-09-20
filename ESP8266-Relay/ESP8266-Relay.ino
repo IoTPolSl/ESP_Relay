@@ -31,9 +31,7 @@ const String HTTP_SCRIPT        = "<script></script>";
 const String HTTP_HEAD_END      = "</head><body>";
 const String HOMEPAGE           = "<form method=\"POST\" action=\"\"><table><tr><td><input type=\"text\" id=\"ssid\"/></td><td>SSID</td></tr><tr><td><input type=\"password\" id=\"password\"/></td><td>PASSWORD</td></tr></table> <br>IP List<table><tr><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td></tr><tr><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td></tr><tr><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td></tr><tr><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td><td><input type=\"number\"/></td></tr><tr><td></td><td></td><td></td><td><input type=\"button\" value=\"SAVE\"/></td></tr></table></form></body>";
 
-//WiFiServer server(8080);
-
-int sleepTime = 60000000; // 5min
+int sleepTime = (5*60*1000*1000); // 5min
 
 int ipDigit_1[255];
 int ipDigit_2[255];
@@ -140,15 +138,20 @@ void loop() {
     }
 
   //------------------------------------------------------------------------
-    for (int i = 0; i<255; i++) {
-      for (int j = 0; j<255; j++) {
-        if ( (ipDigit_3[i] != 0) || (ipDigit_4[j] != 0) ) {
-          IPAddress ip = (192, 168, ipDigit_3[i], ipDigit_4[j]);
-          if (my_ping(RPi_1) == false) {
-            Serial.print("reseting device number "); Serial.print(ipDigit_3[i]); Serial.print(" "); Serial.println(ipDigit_4[j]);
-            digitalWrite(Relay_1, RELAY_OFF);
-            delay(5000);
-            digitalWrite(Relay_1, RELAY_ON);
+    for (int dig1 = 0; dig1<255; dig1++) {
+      for (int dig2 = 0; dig2<255; dig2++) {
+        for (int dig3 = 0; dig3<255; dig3++) {
+          for (int dig4 = 0; dig4<255; dig4++) {
+            if ( (ipDigit_1[dig1] != 0) || (ipDigit_2[dig2] != 0)|| (ipDigit_1[dig1] != 0) || (ipDigit_2[dig2] != 0) ) {
+            IPAddress ip = (192, 168, ipDigit_3[i], ipDigit_4[j]);
+            if (my_ping(RPi_1) == false) {
+                Serial.print("reseting device number "); Serial.print(ipDigit_1[dig1]); Serial.print(" "); Serial.println(ipDigit_2[dig2]);
+                                             Serial.print(" "); Serial.print(ipDigit_3[dig3]); Serial.print(" "); Serial.println(ipDigit_4[dig4]);
+                digitalWrite(Relay_1, RELAY_OFF);
+                delay(5000);
+                digitalWrite(Relay_1, RELAY_ON);
+              }
+            }
           }
         }
       }
@@ -159,7 +162,6 @@ void loop() {
       Serial.print(sleepTime);                       
       Serial.println(" microseconds.");
       ESP.deepSleep(sleepTime); 
-    }
   }  
 
   if (digitalRead(1) == HIGH) {
